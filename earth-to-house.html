@@ -382,12 +382,12 @@
         cloudTunnelGroup.add(puff);
       }
 
-      // ---------- Unified 3D Island & City World (100% Volumetric 3D Geometry, Continuous & Seamless) ----------
+      // ---------- Rich Detailed 3D Island & City World (100% Volumetric 3D Objects: Lake, Roads, Traffic Lights, Vehicles, NPCs, Trees, Skyscrapers) ----------
       const islandWorldGroup = new THREE.Group();
       islandWorldGroup.position.set(0, -0.9, 0);
       scene.add(islandWorldGroup);
 
-      // 1. Vast Translucent 3D Ocean Base
+      // 1. Translucent 3D Ocean Base & Shallow Coral Shelf
       const oceanGeo = new THREE.PlaneGeometry(80, 80);
       const oceanMat = new THREE.MeshStandardMaterial({
         color: 0x0a4b7c,
@@ -401,7 +401,6 @@
       oceanMesh.position.set(0, -0.3, -10);
       islandWorldGroup.add(oceanMesh);
 
-      // 2. Shallow Coral Reef Turquoise Shelf
       const reefGeo = new THREE.RingGeometry(7.5, 14.0, 48);
       const reefMat = new THREE.MeshBasicMaterial({
         color: 0x00b4d8,
@@ -414,7 +413,7 @@
       reefMesh.position.set(0, -0.25, -10);
       islandWorldGroup.add(reefMesh);
 
-      // 3. 3D Island Terrain Mesh (Sand, Hills, Mountains, Central City Corridor)
+      // 2. 3D Island Terrain Mesh (Sand, Hills, Mountain Ridges)
       const terrainGeo = new THREE.PlaneGeometry(28, 36, 90, 90);
       terrainGeo.rotateX(-Math.PI / 2);
 
@@ -427,13 +426,13 @@
       const colorForest = new THREE.Color(0x1b4332);
       const colorMountain = new THREE.Color(0x52b788);
       const colorRock = new THREE.Color(0x6c757d);
-      const colorCityGround = new THREE.Color(0x14203a);
+      const colorCityGround = new THREE.Color(0x1a202c);
 
       const cTmp = new THREE.Color();
 
       for (let i = 0; i < count; i++) {
         const x = tPos.getX(i);
-        const z = tPos.getZ(i); // relative to terrain center
+        const z = tPos.getZ(i);
         const dist = Math.sqrt(x * x + (z - 2.0) * (z - 2.0));
 
         let height = -0.4;
@@ -442,25 +441,22 @@
           const radialFactor = Math.cos((dist / 12.0) * (Math.PI / 2));
           height = radialFactor * 2.6 - 0.2;
 
-          // Mountain ridges on north/west
           if (x < -2.0 && z < 0.0) {
             height += Math.sin(x * 0.5) * Math.cos(z * 0.5) * 1.8;
           }
 
-          // Flatten street corridor from z = -4 to z = -18
-          if (Math.abs(x) < 3.8 && z > -8.0 && z < 8.0) {
-            height = 0.02 + Math.sin(x * 0.2) * 0.04;
+          if (Math.abs(x) < 4.2 && z > -8.0 && z < 8.0) {
+            height = 0.02 + Math.sin(x * 0.2) * 0.03;
           }
         }
 
         if (height < -0.2) height = -0.3;
         tPos.setY(i, height);
-        tPos.setZ(i, z - 10.0); // center terrain at Z = -10
+        tPos.setZ(i, z - 10.0);
 
-        // Vertex coloring based on elevation & area
         if (height < 0.05) {
           cTmp.copy(colorSand);
-        } else if (Math.abs(x) < 3.8 && z > -8.0 && z < 8.0) {
+        } else if (Math.abs(x) < 4.2 && z > -8.0 && z < 8.0) {
           cTmp.copy(colorCityGround);
         } else if (height > 2.4) {
           cTmp.copy(colorRock);
@@ -491,7 +487,190 @@
       const islandMesh = new THREE.Mesh(terrainGeo, islandMat);
       islandWorldGroup.add(islandMesh);
 
-      // 4. 3D City Buildings (Low-poly skyline along the island street corridor)
+      // 3. 3D Island Lake & Central Park
+      const lakeMat = new THREE.MeshStandardMaterial({
+        color: 0x0096c7,
+        roughness: 0.1,
+        metalness: 0.3,
+        transparent: true,
+        opacity: 0
+      });
+      const lakeMesh = new THREE.Mesh(new THREE.CircleGeometry(2.2, 32), lakeMat);
+      lakeMesh.rotation.x = -Math.PI / 2;
+      lakeMesh.position.set(-2.6, 0.05, -7.5);
+      islandWorldGroup.add(lakeMesh);
+
+      const parkMat = new THREE.MeshStandardMaterial({ color: 0x40916c, flatShading: true, transparent: true, opacity: 0 });
+      const parkMesh = new THREE.Mesh(new THREE.RingGeometry(2.2, 3.4, 32), parkMat);
+      parkMesh.rotation.x = -Math.PI / 2;
+      parkMesh.position.set(-2.6, 0.04, -7.5);
+      islandWorldGroup.add(parkMesh);
+
+      // 4. 3D Road Network (Asphalt Avenues & Cross Streets)
+      const asphaltMat = new THREE.MeshStandardMaterial({ color: 0x27272a, roughness: 0.9, transparent: true, opacity: 0 });
+      const mainRoad = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 22), asphaltMat);
+      mainRoad.rotation.x = -Math.PI / 2;
+      mainRoad.position.set(0, 0.03, -10);
+      islandWorldGroup.add(mainRoad);
+
+      const crossStZ = [-5.5, -9.5, -13.5];
+      crossStZ.forEach(z => {
+        const crossRoad = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.4), asphaltMat);
+        crossRoad.rotation.x = -Math.PI / 2;
+        crossRoad.position.set(0, 0.035, z);
+        islandWorldGroup.add(crossRoad);
+      });
+
+      // White Dashed Lane Markings
+      const laneMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+      for (let z = -18; z < -1; z += 1.2) {
+        const stripe = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.6), laneMat);
+        stripe.rotation.x = -Math.PI / 2;
+        stripe.position.set(0, 0.04, z);
+        islandWorldGroup.add(stripe);
+      }
+
+      // 5. 3D Traffic Lights (Lampu Merah at Intersections)
+      const trafficLightMat = new THREE.MeshStandardMaterial({ color: 0x3f3f46, roughness: 0.5, transparent: true, opacity: 0 });
+      const redLightMat = new THREE.MeshBasicMaterial({ color: 0xef4444, transparent: true, opacity: 0 });
+      const greenLightMat = new THREE.MeshBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0 });
+
+      crossStZ.forEach(z => {
+        [-0.9, 0.9].forEach(x => {
+          const tPole = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.1, 8), trafficLightMat);
+          tPole.position.set(x, 0.55, z - 0.7);
+          islandWorldGroup.add(tPole);
+
+          const tBox = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.3, 0.12), trafficLightMat);
+          tBox.position.set(x, 1.0, z - 0.7);
+          islandWorldGroup.add(tBox);
+
+          const rDot = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), redLightMat);
+          rDot.position.set(x, 1.08, z - 0.63);
+          islandWorldGroup.add(rDot);
+
+          const gDot = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), greenLightMat);
+          gDot.position.set(x, 0.92, z - 0.63);
+          islandWorldGroup.add(gDot);
+        });
+      });
+
+      // 6. 3D Vehicles (Mobil-Mobil on Roads & Intersections)
+      const vehicleColors = [0xef4444, 0x3b82f6, 0xf59e0b, 0x10b981, 0xf43f5e, 0x8b5cf6, 0xec4899];
+      const carMaterials = vehicleColors.map(c => new THREE.MeshStandardMaterial({ color: c, flatShading: true, roughness: 0.4, transparent: true, opacity: 0 }));
+      const wheelMat = new THREE.MeshStandardMaterial({ color: 0x18181b, roughness: 0.9, transparent: true, opacity: 0 });
+
+      const carGeoBody = new THREE.BoxGeometry(0.32, 0.15, 0.58);
+      const carGeoCabin = new THREE.BoxGeometry(0.26, 0.13, 0.32);
+      const carGeoWheel = new THREE.CylinderGeometry(0.055, 0.055, 0.04, 8);
+      carGeoWheel.rotateZ(Math.PI / 2);
+
+      const carSpots = [
+        { x: -0.4, z: -3.5, rotY: 0 },
+        { x: 0.4, z: -5.0, rotY: Math.PI },
+        { x: -0.4, z: -7.2, rotY: 0 },
+        { x: 0.4, z: -8.8, rotY: Math.PI },
+        { x: -0.4, z: -11.5, rotY: 0 },
+        { x: 0.4, z: -13.0, rotY: Math.PI },
+        { x: -0.4, z: -14.8, rotY: 0 },
+        { x: 2.2, z: -5.5, rotY: Math.PI / 2 },
+        { x: -2.5, z: -9.5, rotY: -Math.PI / 2 },
+        { x: 3.0, z: -13.5, rotY: Math.PI / 2 }
+      ];
+
+      carSpots.forEach((spot, idx) => {
+        const carGroup = new THREE.Group();
+        carGroup.position.set(spot.x, 0.12, spot.z);
+        carGroup.rotation.y = spot.rotY;
+
+        const cMat = carMaterials[idx % carMaterials.length];
+        const bodyMesh = new THREE.Mesh(carGeoBody, cMat);
+        bodyMesh.position.y = 0.08;
+        carGroup.add(bodyMesh);
+
+        const cabinMesh = new THREE.Mesh(carGeoCabin, buildingMatA);
+        cabinMesh.position.set(0, 0.2, -0.02);
+        carGroup.add(cabinMesh);
+
+        [[-0.17, 0.18], [0.17, 0.18], [-0.17, -0.18], [0.17, -0.18]].forEach(wPos => {
+          const wMesh = new THREE.Mesh(carGeoWheel, wheelMat);
+          wMesh.position.set(wPos[0], 0.06, wPos[1]);
+          carGroup.add(wMesh);
+        });
+
+        islandWorldGroup.add(carGroup);
+      });
+
+      // 7. 3D People / NPCs (Orang-Orang NPC Walking & Standing)
+      const skinToneMat = new THREE.MeshStandardMaterial({ color: 0xd7a487, roughness: 0.8, transparent: true, opacity: 0 });
+      const shirtColors = [0xf43f5e, 0x06b6d4, 0x8b5cf6, 0x84cc16, 0xeab308, 0xec4899];
+      const shirtMats = shirtColors.map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, transparent: true, opacity: 0 }));
+
+      const npcHeadGeo = new THREE.SphereGeometry(0.055, 8, 8);
+      const npcTorsoGeo = new THREE.BoxGeometry(0.12, 0.2, 0.09);
+
+      for (let i = 0; i < 38; i++) {
+        const npcGroup = new THREE.Group();
+        const nx = (Math.random() - 0.5) * 6.5;
+        const nz = -3 - Math.random() * 12;
+        if (Math.abs(nx) < 0.2) continue;
+
+        npcGroup.position.set(nx, 0.12, nz);
+
+        const sMat = shirtMats[i % shirtMats.length];
+        const tMesh = new THREE.Mesh(npcTorsoGeo, sMat);
+        tMesh.position.y = 0.1;
+        npcGroup.add(tMesh);
+
+        const hMesh = new THREE.Mesh(npcHeadGeo, skinToneMat);
+        hMesh.position.y = 0.25;
+        npcGroup.add(hMesh);
+
+        islandWorldGroup.add(npcGroup);
+      }
+
+      // 8. 3D Volumetric Trees & Palm Trees (Pepohonan 3D Real)
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3d2e, roughness: 0.9, transparent: true, opacity: 0 });
+      const treeLeafMatA = new THREE.MeshStandardMaterial({ color: 0x1b4332, flatShading: true, roughness: 0.8, transparent: true, opacity: 0 });
+      const treeLeafMatB = new THREE.MeshStandardMaterial({ color: 0x2d6a4f, flatShading: true, roughness: 0.8, transparent: true, opacity: 0 });
+      const treeLeafMats = [treeLeafMatA, treeLeafMatB];
+
+      const trunkGeo = new THREE.CylinderGeometry(0.05, 0.08, 0.5, 6);
+      const foliageGeoA = new THREE.ConeGeometry(0.38, 0.75, 6);
+      const foliageGeoB = new THREE.IcosahedronGeometry(0.35, 1);
+
+      for (let i = 0; i < 70; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 3.8 + Math.random() * 5.2;
+        const tx = Math.cos(angle) * dist;
+        const tz = Math.sin(angle) * dist - 8;
+
+        const treeGroup = new THREE.Group();
+        treeGroup.position.set(tx, 0.25, tz);
+
+        const trMesh = new THREE.Mesh(trunkGeo, trunkMat);
+        trMesh.position.y = 0.25;
+        treeGroup.add(trMesh);
+
+        const lMat = treeLeafMats[i % treeLeafMats.length];
+        if (i % 2 === 0) {
+          const fMesh1 = new THREE.Mesh(foliageGeoA, lMat);
+          fMesh1.position.y = 0.65;
+          treeGroup.add(fMesh1);
+          const fMesh2 = new THREE.Mesh(foliageGeoA, lMat);
+          fMesh2.position.y = 0.9;
+          fMesh2.scale.set(0.7, 0.7, 0.7);
+          treeGroup.add(fMesh2);
+        } else {
+          const fMesh = new THREE.Mesh(foliageGeoB, lMat);
+          fMesh.position.y = 0.68;
+          treeGroup.add(fMesh);
+        }
+
+        islandWorldGroup.add(treeGroup);
+      }
+
+      // 9. 3D City Skyscrapers & Buildings
       const buildingMatA = new THREE.MeshStandardMaterial({ color: 0x1a2744, flatShading: true, roughness: 0.8, transparent: true, opacity: 0 });
       const buildingMatB = new THREE.MeshStandardMaterial({ color: 0x123028, flatShading: true, roughness: 0.8, transparent: true, opacity: 0 });
       const buildingMatC = new THREE.MeshStandardMaterial({ color: 0x243b66, flatShading: true, roughness: 0.8, transparent: true, opacity: 0 });
@@ -499,8 +678,8 @@
 
       for (let i = 0; i < 56; i++) {
         const x = (Math.random() - 0.5) * 16;
-        const z = -3 - Math.random() * 12.5; // Z = -3 to -15.5
-        if (Math.abs(x) < 1.8 && z > -10) continue; // street corridor
+        const z = -3 - Math.random() * 12.5;
+        if (Math.abs(x) < 1.8 && z > -10) continue;
 
         const h = 0.9 + Math.random() * 2.4;
         const w = 0.6 + Math.random() * 0.95;
@@ -510,7 +689,7 @@
         islandWorldGroup.add(b);
       }
 
-      // 5. House (End of the city street corridor on the island)
+      // 10. House (End of the city street corridor on the island)
       const houseGroup = new THREE.Group();
       islandWorldGroup.add(houseGroup);
 
@@ -530,8 +709,13 @@
       win.position.set(0, 0.9, -16.19);
       houseGroup.add(win);
 
-      // Collect all 3D world materials for single smooth opacity control
-      const islandWorldMaterials = [islandMat, oceanMat, reefMat, buildingMatA, buildingMatB, buildingMatC, bodyMat, roofMat, windowMat];
+      // Collect ALL 3D world materials for smooth opacity control
+      const islandWorldMaterials = [
+        islandMat, oceanMat, reefMat, lakeMat, parkMat, asphaltMat, laneMat,
+        trafficLightMat, redLightMat, greenLightMat, wheelMat, skinToneMat,
+        trunkMat, treeLeafMatA, treeLeafMatB, buildingMatA, buildingMatB, buildingMatC,
+        bodyMat, roofMat, windowMat, ...carMaterials, ...shirtMats
+      ];
 
 // ---------- Interior room (visible from inside once camera passes the window) ----------
       const interiorGroup = new THREE.Group();
